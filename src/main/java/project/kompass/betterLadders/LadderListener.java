@@ -13,14 +13,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
-public class LadderListener extends JavaPlugin implements Listener {
-
-    @Override
-    public void onEnable() {
-        // Registering the listener (this class) so the events work
-        getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("LadderPlus is ready to climb!");
-    }
+public class LadderListener implements Listener {
 
     // 1. FASTER CLIMBING
     @EventHandler
