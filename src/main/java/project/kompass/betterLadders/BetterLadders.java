@@ -4,10 +4,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class BetterLadders extends JavaPlugin {
 
-    @Override
     public void onEnable() {
-        // Plugin startup logic
-
+        // Registering the listener (this class) so the events work
+        getServer().getPluginManager().registerEvents(new LadderListener(), this);
+        getLogger().info("Get ready to climb!");
     }
 
     @Override

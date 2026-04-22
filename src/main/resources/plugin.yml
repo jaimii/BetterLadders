@@ -4,4 +4,4 @@ main: project.kompass.betterLadders.BetterLadders
 api-version: '1.21'
 authors: [ JustJaimii ]
 description:
-  Makes Illagers fight zombies. For Project: Kompass
+  Better Ladders for Project: Kompass
