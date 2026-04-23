@@ -7,10 +7,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 public class LadderListener implements Listener {
@@ -22,15 +22,17 @@ public class LadderListener implements Listener {
         Block block = player.getLocation().getBlock();
 
         if (block.getType() == Material.LADDER) {
-            Vector velocity = player.getVelocity();
+            // Calculate how much they moved vertically in this tick
+            double yDiff = event.getTo().getY() - event.getFrom().getY();
 
-            // If player is looking up and moving, give them a boost
-            if (player.getLocation().getPitch() < -15 && velocity.getY() > 0) {
-                player.setVelocity(velocity.add(new Vector(0, 0.15, 0)));
+            // If moving UP naturally, give a small upward boost
+            if (yDiff > 0) {
+                // 0.04 is a gentle boost compared to the previous 0.15
+                player.setVelocity(player.getVelocity().add(new Vector(0, 0.04, 0)));
             }
-            // If player is looking down, speed up the descent
-            else if (player.getLocation().getPitch() > 15 && player.isSneaking()) {
-                player.setVelocity(velocity.add(new Vector(0, -0.2, 0)));
+            // If moving DOWN naturally, give a small downward boost
+            else if (yDiff < 0) {
+                player.setVelocity(player.getVelocity().add(new Vector(0, -0.04, 0)));
             }
         }
     }
@@ -64,21 +66,18 @@ public class LadderListener implements Listener {
         return current;
     }
 
-    //3. CHAIN PLACING LADDERS
+    // 3. CHAIN PLACING LADDERS
     @EventHandler
     public void onLadderChainPlace(PlayerInteractEvent event) {
-        // 1. Check if the player is sneaking and right-clicking a block
         if (!event.getPlayer().isSneaking() || event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         Block clickedBlock = event.getClickedBlock();
         Player player = event.getPlayer();
         ItemStack itemInHand = event.getItem();
 
-        // 2. Ensure they are clicking a ladder AND holding a ladder
         if (clickedBlock != null && clickedBlock.getType() == Material.LADDER &&
                 itemInHand != null && itemInHand.getType() == Material.LADDER) {
 
-            // 3. Find the bottom-most ladder in this specific column
             Block bottomLadder = clickedBlock;
             while (bottomLadder.getRelative(BlockFace.DOWN).getType() == Material.LADDER) {
                 bottomLadder = bottomLadder.getRelative(BlockFace.DOWN);
@@ -86,17 +85,10 @@ public class LadderListener implements Listener {
 
             Block targetBlock = bottomLadder.getRelative(BlockFace.DOWN);
 
-            // 4. Check if the space below is empty (Air or replaceable like grass)
             if (targetBlock.getType().isAir() || targetBlock.isReplaceable()) {
-
-                // Place the ladder
                 targetBlock.setType(Material.LADDER, false);
-
-                // 5. Copy the 'Facing' direction from the clicked ladder
-                // This ensures the floating ladder faces the same way as the one it's hanging from
                 targetBlock.setBlockData(clickedBlock.getBlockData());
 
-                // 6. Visuals and Survival mechanics
                 player.swingMainHand();
                 targetBlock.getWorld().playSound(targetBlock.getLocation(),
                         org.bukkit.Sound.BLOCK_LADDER_PLACE, 1.0f, 1.0f);
@@ -104,10 +96,16 @@ public class LadderListener implements Listener {
                 if (player.getGameMode() != org.bukkit.GameMode.CREATIVE) {
                     itemInHand.setAmount(itemInHand.getAmount() - 1);
                 }
-
-                // Cancel the event so they don't accidentally place a ladder on the face they clicked
                 event.setCancelled(true);
             }
+        }
+    }
+
+    // 4. PREVENT FLOATING LADDERS FROM BREAKING
+    @EventHandler
+    public void onLadderPhysics(BlockPhysicsEvent event) {
+        if (event.getBlock().getType() == Material.LADDER) {
+            event.setCancelled(true);
         }
     }
 }
