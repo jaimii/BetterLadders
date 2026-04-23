@@ -15,24 +15,22 @@ import org.bukkit.util.Vector;
 
 public class LadderListener implements Listener {
 
-    // 1. FASTER CLIMBING
+    // 1. FASTER CLIMBING (Reverted to Pitch-based, keeping 0.04 velocity)
     @EventHandler
     public void onLadderClimb(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         Block block = player.getLocation().getBlock();
 
         if (block.getType() == Material.LADDER) {
-            // Calculate how much they moved vertically in this tick
-            double yDiff = event.getTo().getY() - event.getFrom().getY();
+            Vector velocity = player.getVelocity();
 
-            // If moving UP naturally, give a small upward boost
-            if (yDiff > 0) {
-                // 0.04 is a gentle boost compared to the previous 0.15
-                player.setVelocity(player.getVelocity().add(new Vector(0, 0.04, 0)));
+            // If player is looking UP (pitch < -15) and moving upwards, give a small boost
+            if (player.getLocation().getPitch() < -15 && velocity.getY() > 0) {
+                player.setVelocity(velocity.add(new Vector(0, 0.04, 0)));
             }
-            // If moving DOWN naturally, give a small downward boost
-            else if (yDiff < 0) {
-                player.setVelocity(player.getVelocity().add(new Vector(0, -0.04, 0)));
+            // If player is looking DOWN (pitch > 15) and sneaking, speed up the descent
+            else if (player.getLocation().getPitch() > 15 && player.isSneaking()) {
+                player.setVelocity(velocity.add(new Vector(0, -0.04, 0)));
             }
         }
     }
