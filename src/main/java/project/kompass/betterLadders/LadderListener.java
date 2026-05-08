@@ -9,33 +9,11 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 
 public class LadderListener implements Listener {
 
-    // 1. FASTER CLIMBING (Reverted to Pitch-based, keeping 0.04 velocity)
-    @EventHandler
-    public void onLadderClimb(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
-        Block block = player.getLocation().getBlock();
-
-        if (block.getType() == Material.LADDER) {
-            Vector velocity = player.getVelocity();
-
-            // If player is looking UP (pitch < -15) and moving upwards, give a small boost
-            if (player.getLocation().getPitch() < -15 && velocity.getY() > 0) {
-                player.setVelocity(velocity.add(new Vector(0, 0.04, 0)));
-            }
-            // If player is looking DOWN (pitch > 15) and sneaking, speed up the descent
-            else if (player.getLocation().getPitch() > 15 && player.isSneaking()) {
-                player.setVelocity(velocity.add(new Vector(0, -0.04, 0)));
-            }
-        }
-    }
-
-    // 2. TELEPORT TO TOP/BOTTOM
+    // 1. TELEPORT TO TOP/BOTTOM
     @EventHandler
     public void onLadderInteract(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock().getType() == Material.LADDER) {
@@ -64,7 +42,7 @@ public class LadderListener implements Listener {
         return current;
     }
 
-    // 3. CHAIN PLACING LADDERS
+    // 2. CHAIN PLACING LADDERS
     @EventHandler
     public void onLadderChainPlace(PlayerInteractEvent event) {
         if (!event.getPlayer().isSneaking() || event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
@@ -99,7 +77,7 @@ public class LadderListener implements Listener {
         }
     }
 
-    // 4. PREVENT FLOATING LADDERS FROM BREAKING
+    // 3. PREVENT FLOATING LADDERS FROM BREAKING
     @EventHandler
     public void onLadderPhysics(BlockPhysicsEvent event) {
         if (event.getBlock().getType() == Material.LADDER) {
