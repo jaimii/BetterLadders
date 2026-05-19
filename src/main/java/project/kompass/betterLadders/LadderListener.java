@@ -1,15 +1,20 @@
 package project.kompass.betterLadders;
 
+import org.bukkit.Input;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Boat;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPhysicsEvent;
+import org.bukkit.event.player.PlayerInputEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 public class LadderListener implements Listener {
 
@@ -82,6 +87,33 @@ public class LadderListener implements Listener {
     public void onLadderPhysics(BlockPhysicsEvent event) {
         if (event.getBlock().getType() == Material.LADDER) {
             event.setCancelled(true);
+        }
+    }
+
+    // 4. BOAT JUMPING
+    @EventHandler
+    public void onPlayerInput(PlayerInputEvent event) {
+        Player player = event.getPlayer();
+        Input input = event.getInput();
+        Input previous = player.getCurrentInput();
+
+        // Check if the jump button was JUST pressed (compare to the previous input state)
+        boolean justJumped = input.isJump() && (previous == null || !previous.isJump());
+
+        // Use pattern matching for instanceof (Java 16+) to automatically cast the vehicle
+        if (justJumped && player.getVehicle() instanceof Boat boat) {
+
+            // Prevent mid-air jumps by enforcing that the boat must be touching a block or floating in water
+            if (boat.isOnGround() || boat.isInWater()) {
+                Vector velocity = boat.getVelocity();
+
+                // Add vertical velocity (A normal player jump is ~0.42. 0.5 works nicely for boats)
+                velocity.setY(0.5);
+                boat.setVelocity(velocity);
+
+                // Play a satisfying sound effect to give feedback to the jump
+                boat.getWorld().playSound(boat.getLocation(), Sound.ENTITY_BOAT_PADDLE_LAND, 1.0f, 0.8f);
+            }
         }
     }
 }
